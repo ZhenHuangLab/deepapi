@@ -93,22 +93,26 @@ class DeepThinkEngine:
     
     async def _generate_thinking_plan(self, problem_statement: MessageContent) -> str:
         """计划阶段 - 生成思考计划"""
+        import logging
+        logger = logging.getLogger(__name__)
+
         self._emit("progress", {"message": "Generating thinking plan..."})
-        
+
         # 提取文本用于构建提示词
         problem_text = extract_text_from_content(problem_statement)
-        prompt = build_thinking_plan_prompt(problem_text)
-        
-        # 直接使用 prompt 参数传递多模态内容
+        prompt_text = build_thinking_plan_prompt(problem_text)
+
+        # 使用构建好的提示词
         planning_model = self._get_model_for_stage("planning")
         plan = await self.client.generate_text(
             model=planning_model,
-            prompt=problem_statement,  # 保留多模态内容
+            prompt=prompt_text,  # 使用包含计划指令的提示词
             **self.llm_params
         )
-        
+
+        logger.info(f"[DEBUG] Generated plan length: {len(plan)}, first 100 chars: {plan[:100]}")
         self._emit("planning", {"plan": plan})
-        
+
         return plan
     
     async def _verify_solution(self, solution: str, index: int) -> Dict[str, Any]:
@@ -288,7 +292,11 @@ class DeepThinkEngine:
             messages=messages,
             **self.llm_params
         )
-        
+
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"[DEBUG] First solution length: {len(first_solution)}, first 100 chars: {first_solution[:100] if first_solution else 'EMPTY'}")
+
         self._emit("solution", {"solution": first_solution, "iteration": 0})
         
         # 自我改进
@@ -326,7 +334,11 @@ class DeepThinkEngine:
             messages=improvement_messages,
             **self.llm_params
         )
-        
+
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"[DEBUG] Generated solution length: {len(improved_solution)}, first 100 chars: {improved_solution[:100]}")
+
         self._emit("solution", {"solution": improved_solution, "iteration": 0})
         
         # 验证 - 根据配置选择串行或并行

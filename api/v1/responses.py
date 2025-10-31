@@ -98,17 +98,31 @@ async def _stream_responses(engine, request_id: str, created: int, model: str, t
     # 启动引擎
     engine_task = asyncio.create_task(engine.run())
 
+    import logging
+    logger = logging.getLogger(__name__)
+
     try:
         # 流式发送进度/推理
         while not engine_task.done():
             while progress_queue:
                 event = progress_queue.pop(0)
+
+                # DEBUG: 记录事件类型和数据
+                event_type = getattr(event, 'type', '')
+                event_data = getattr(event, 'data', {}) or {}
+                if event_type in ['planning', 'solution']:
+                    logger.info(f"[DEBUG] Event type: {event_type}, data keys: {list(event_data.keys())}")
+                    if 'plan' in event_data:
+                        logger.info(f"[DEBUG] Plan length: {len(event_data.get('plan', ''))}")
+                    if 'solution' in event_data:
+                        logger.info(f"[DEBUG] Solution length: {len(event_data.get('solution', ''))}")
+
                 # 统一的 progress 事件（结构化）
                 evt_progress = {
                     'type': 'response.progress',
                     'progress': {
-                        'event': getattr(event, 'type', ''),
-                        **(getattr(event, 'data', {}) or {})
+                        'event': event_type,
+                        **event_data
                     },
                     'response': {'id': request_id}
                 }
@@ -233,7 +247,7 @@ async def responses_endpoint(
 
     # 创建后端客户端
     max_retry = model_config.get_max_retry(default=config.max_retry)
-    client = create_client(provider_config.base_url, provider_config.key, model_config.rpm, max_retry)
+    client = create_client(provider_config.base_url, provider_config.key, model_config.rpm, max_retry, provider_config.response_api)
     # 如果启用了 summary_think,创建思维链生成器（与 chat 接口保持一致）
     thinking_generator = None
     if getattr(model_config, 'has_summary_think', False):

@@ -284,8 +284,8 @@ async def stream_chat_completion(
     
     # 创建后端客户端 - 传入RPM限制和重试次数，将在每次调用后端API时进行限流
     max_retry = model_config.get_max_retry(default=config.max_retry)
-    client = create_client(provider_config.base_url, provider_config.key, model_config.rpm, max_retry)
-    
+    client = create_client(provider_config.base_url, provider_config.key, model_config.rpm, max_retry, provider_config.response_api)
+
     # 不再直接注入提示词，而是通过标志传递给引擎
     # 引擎会在正确的时机执行 Ask 和 Plan 阶段
     
@@ -423,8 +423,8 @@ async def chat_completions(
         
         # 创建后端客户端 - 传入RPM限制和重试次数，将在每次调用后端API时进行限流
         max_retry = model_config.get_max_retry(default=config.max_retry)
-        client = create_client(provider_config.base_url, provider_config.key, model_config.rpm, max_retry)
-        
+        client = create_client(provider_config.base_url, provider_config.key, model_config.rpm, max_retry, provider_config.response_api)
+
         # 根据模型级别处理
         reasoning_text = None
         if model_config.level == "ultrathink":
