@@ -28,7 +28,7 @@ def extract_text_from_content(content: MessageContent) -> str:
     """
     if isinstance(content, str):
         return content
-    
+
     # 多模态内容，提取所有文本部分
     text_parts = []
     for item in content:
@@ -43,7 +43,7 @@ def extract_text_from_content(content: MessageContent) -> str:
                 else:
                     url = str(image_url)
                 text_parts.append(f"[Image: {url[:50]}...]")
-    
+
     return "\n".join(text_parts) if text_parts else str(content)
 
 
@@ -61,7 +61,7 @@ class ChatCompletionRequest(BaseModel):
     frequency_penalty: Optional[float] = 0
     logit_bias: Optional[Dict[str, float]] = None
     user: Optional[str] = None
-    
+
     # DeepThink 特定参数
     deep_think_options: Optional[Dict[str, Any]] = None
 
@@ -97,6 +97,41 @@ class ChatCompletionChunk(BaseModel):
     created: int
     model: str
     choices: List[Dict[str, Any]]
+
+
+# ============ OpenAI Responses API 兼容模型 ============
+
+class ResponseRequest(BaseModel):
+    """Responses 标准接口请求（最小可用子集）"""
+    model: str
+    # 支持 input（字符串或结构化）与 messages（与 chat-completions 一致）两种入口
+    input: Optional[Any] = None
+    messages: Optional[List[Message]] = None
+    stream: Optional[bool] = False
+    temperature: Optional[float] = 1.0
+    # responses 常见字段名，兼容 max_tokens
+    max_output_tokens: Optional[int] = None
+    max_tokens: Optional[int] = None
+    user: Optional[str] = None
+
+class ResponseUsage(BaseModel):
+    input_tokens: int = 0
+    output_tokens: int = 0
+    total_tokens: int = 0
+
+class Response(BaseModel):
+    """Responses 标准接口响应（最小可用子集）"""
+    id: str
+    object: str = "response"
+    created: int
+    model: str
+    # OpenAI Responses 把最终输出放到 output 列表中（message 结构）
+    output: List[Dict[str, Any]]
+    # 许多客户端会读取 output_text 便捷字段
+    output_text: Optional[str] = None
+    usage: Optional[ResponseUsage] = None
+    status: str = "completed"
+
 
 
 # ============ Deep Think 内部模型 ============

@@ -47,3 +47,4 @@ legacy
 config.yaml
 
 .spec-workflow/
+.serena/

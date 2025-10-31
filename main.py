@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from config import config
-from api.v1 import chat, models
+from api.v1 import chat, models, responses
 
 # 配置日志
 logging.basicConfig(
@@ -47,6 +47,7 @@ app.add_middleware(
 # 注册路由
 app.include_router(chat.router, tags=["Chat"])
 app.include_router(models.router, tags=["Models"])
+app.include_router(responses.router, tags=["Responses"])
 
 
 @app.get("/")
@@ -58,6 +59,7 @@ async def root():
         "description": "OpenAI-compatible API with DeepThink and UltraThink reasoning engines",
         "endpoints": {
             "chat": "/v1/chat/completions",
+            "responses": "/v1/responses",
             "models": "/v1/models",
         }
     }
