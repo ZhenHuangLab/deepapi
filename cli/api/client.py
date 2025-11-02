@@ -13,7 +13,7 @@ class DeepAPIClient:
 
     async def list_models(self) -> List[str]:
         url = f"{self.base}/v1/models"
-        async with httpx.AsyncClient(timeout=30) as s:
+        async with httpx.AsyncClient(timeout=30, trust_env=False) as s:
             r = await s.get(url, headers=self.headers)
             r.raise_for_status()
             data = r.json()
@@ -28,7 +28,7 @@ class DeepAPIClient:
         url = f"{self.base}/v1/responses"
         body = {**body, "stream": True}
         headers = {**self.headers, "Accept": "text/event-stream"}
-        async with httpx.AsyncClient(timeout=None) as s:
+        async with httpx.AsyncClient(timeout=None, trust_env=False) as s:
             async with s.stream("POST", url, headers=headers, json=body) as r:
                 # 显式检查非 2xx，避免静默无输出
                 if r.status_code >= 400:
@@ -51,7 +51,7 @@ class DeepAPIClient:
         url = f"{self.base}/v1/chat/completions"
         body = {**body, "stream": True}
         headers = {**self.headers, "Accept": "text/event-stream"}
-        async with httpx.AsyncClient(timeout=None) as s:
+        async with httpx.AsyncClient(timeout=None, trust_env=False) as s:
             async with s.stream("POST", url, headers=headers, json=body) as r:
                 if r.status_code >= 400:
                     raw = await r.aread()

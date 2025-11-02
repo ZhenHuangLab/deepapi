@@ -159,6 +159,56 @@ for chunk in stream:
 
 ## 配置详解
 
+### Provider 配置
+
+Provider 配置定义了后端 LLM 提供商的连接信息。
+
+#### base_url 配置规则
+
+**重要**: `base_url` 应该只包含基础 URL，**不要包含具体的 API 端点路径**！
+
+OpenAI SDK 会自动根据 `response_api` 设置添加正确的端点：
+- `response_api: false` → SDK 自动添加 `/chat/completions`
+- `response_api: true` → SDK 自动添加 `/responses`
+
+**正确示例**:
+```yaml
+provider:
+  openai:
+    base_url: "https://api.openai.com/v1"      # ✓ 正确
+    key: "sk-xxx"
+    response_api: false
+
+  gemini:
+    base_url: "https://api.example.com/v1"     # ✓ 正确
+    key: "your-key"
+    response_api: false
+```
+
+**错误示例**:
+```yaml
+provider:
+  wrong_config:
+    base_url: "https://api.example.com/v1/chat/completions"  # ✗ 错误！
+    # 这会导致 URL 变成: /v1/chat/completions/responses
+    response_api: true
+```
+
+#### response_api 参数
+
+- `false`: 使用标准的 OpenAI Chat Completions API (`/chat/completions`)
+  - 适用于大多数 OpenAI 兼容的提供商
+  - 如：OpenAI、Azure OpenAI、大部分第三方代理
+
+- `true`: 使用 Responses API (`/responses`)
+  - 仅适用于支持该 API 的提供商
+  - 如：某些特定的 OpenAI 兼容服务
+
+**如何选择**:
+1. 如果不确定，使用 `response_api: false`（标准 Chat Completions API）
+2. 只有当提供商明确支持 Responses API 时才使用 `response_api: true`
+3. 如果遇到 404 错误，检查是否错误设置了 `response_api: true`
+
 ### 模型级别 (level)
 
 - **`deepthink`** - DeepThink 模式

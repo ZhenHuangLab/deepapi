@@ -13,20 +13,44 @@ system:
   max_retry: 3
 
 # 后端模型提供者配置
+#
+# 重要说明：base_url 配置规则
+# ================================
+# base_url 应该只包含基础 URL，不要包含具体的 API 端点路径！
+# OpenAI SDK 会自动根据 response_api 设置添加正确的端点：
+#   - response_api: false → SDK 自动添加 /chat/completions
+#   - response_api: true  → SDK 自动添加 /responses
+#
+# 正确示例：
+#   base_url: "https://api.example.com/v1"           ✓ 正确
+#   base_url: "https://api.example.com/v1/"          ✓ 正确（末尾斜杠会被自动处理）
+#
+# 错误示例：
+#   base_url: "https://api.example.com/v1/chat/completions"  ✗ 错误！会导致 URL 变成 /v1/chat/completions/responses
+#   base_url: "https://api.example.com/v1/responses"         ✗ 错误！会导致 URL 变成 /v1/responses/responses
+#
 provider:
   # OpenAI 兼容的提供商
   openai:
     base_url: "https://api.openai.com/v1"
     key: "sk-xxx"
-    # 是否使用 response API (流式)
+    # 是否使用 Responses API
+    # false: 使用标准的 /chat/completions 端点
+    # true:  使用 /responses 端点（某些提供商支持）
     response_api: false
 
-  
-  # Anthropic 示例
+
+  # Anthropic 示例（支持 Responses API）
   anthropic:
     base_url: "https://api.anthropic.com/v1"
     key: "sk-ant-xxx"
     response_api: true
+
+  # 其他 OpenAI 兼容提供商示例（仅支持标准 Chat Completions API）
+  # gemini:
+  #   base_url: "https://generativelanguage.googleapis.com/v1beta"
+  #   key: "your-gemini-api-key"
+  #   response_api: false  # Gemini 使用标准的 /chat/completions 端点
 
 # 向外导出的模型列表 (通过 /v1/models 访问)
 model:
